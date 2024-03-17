@@ -221,14 +221,17 @@ class DemoTransformer(nn.Module):
         super().__init__()
         self.cfg = cfg
         self.embed = Embed(cfg)
-        self.pos_embed = PosEmbed(cfg)
+        if cfg.pos_embed:
+            self.pos_embed = PosEmbed(cfg)
         self.blocks = nn.ModuleList([TransformerBlock(cfg) for _ in range(cfg.n_layers)])
         self.ln_final = LayerNorm(cfg)
         self.unembed = Unembed(cfg)
 
     def forward(self, tokens: Int[Tensor, "batch position"]) -> Float[Tensor, "batch position d_vocab"]:
         # SOLUTION
-        residual = self.embed(tokens) + self.pos_embed(tokens)
+        residual = self.embed(tokens) 
+        if self.cfg.pos_embed:
+            residual+=self.pos_embed(tokens)
         for block in self.blocks:
             residual = block(residual)
         logits = self.unembed(self.ln_final(residual))
